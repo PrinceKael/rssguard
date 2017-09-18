@@ -18,7 +18,6 @@
 #include "services/owncloud/owncloudrecyclebin.h"
 
 #include "services/owncloud/owncloudserviceroot.h"
-#include "services/abstract/cacheforserviceroot.h"
 #include "services/owncloud/network/owncloudnetworkfactory.h"
 
 #include <QNetworkReply>
@@ -35,6 +34,5 @@ OwnCloudServiceRoot* OwnCloudRecycleBin::serviceRoot() {
 }
 
 bool OwnCloudRecycleBin::markAsReadUnread(RootItem::ReadStatus status) {
-	serviceRoot()->addMessageStatesToCache(getParentServiceRoot()->customIDSOfMessagesForItem(this), status);
 	return RecycleBin::markAsReadUnread(status);
 }

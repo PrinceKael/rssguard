@@ -19,6 +19,7 @@
 
 #include "services/owncloud/owncloudserviceroot.h"
 #include "miscellaneous/application.h"
+#include "services/owncloud/network/owncloudnetworkfactory.h"
 #include "miscellaneous/iconfactory.h"
 
 
@@ -39,7 +40,7 @@ OwnCloudServiceRoot* OwnCloudCategory::serviceRoot() const {
 }
 
 bool OwnCloudCategory::markAsReadUnread(RootItem::ReadStatus status) {
-	serviceRoot()->addMessageStatesToCache(getParentServiceRoot()->customIDSOfMessagesForItem(this), status);
+  serviceRoot()->network()->markMessagesRead(status, serviceRoot()->customIDSOfMessagesForItem(this));
 	return serviceRoot()->markFeedsReadUnread(getSubTreeFeeds(), status);
 }
 

@@ -19,7 +19,6 @@
 #define OWNCLOUDSERVICEROOT_H
 
 #include "services/abstract/serviceroot.h"
-#include "services/abstract/cacheforserviceroot.h"
 
 #include <QMap>
 
@@ -28,7 +27,7 @@ class OwnCloudNetworkFactory;
 class OwnCloudRecycleBin;
 class Mutex;
 
-class OwnCloudServiceRoot : public ServiceRoot, public CacheForServiceRoot {
+class OwnCloudServiceRoot : public ServiceRoot {
 		Q_OBJECT
 
 	public:
@@ -55,9 +54,6 @@ class OwnCloudServiceRoot : public ServiceRoot, public CacheForServiceRoot {
 
 		void updateTitle();
 		void saveAccountDataToDatabase();
-
-
-		void saveAllCachedData();
 
 	public slots:
 		void addNewFeed(const QString& url);

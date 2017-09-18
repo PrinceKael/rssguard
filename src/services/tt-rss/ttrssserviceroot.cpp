@@ -39,7 +39,7 @@
 
 
 TtRssServiceRoot::TtRssServiceRoot(RootItem* parent)
-	: ServiceRoot(parent), CacheForServiceRoot(), m_recycleBin(new TtRssRecycleBin(this)),
+  : ServiceRoot(parent), m_recycleBin(new TtRssRecycleBin(this)),
 	  m_actionSyncIn(nullptr), m_serviceMenu(QList<QAction*>()), m_network(new TtRssNetworkFactory()) {
 	setIcon(TtRssServiceEntryPoint().icon());
 }
@@ -51,7 +51,6 @@ TtRssServiceRoot::~TtRssServiceRoot() {
 void TtRssServiceRoot::start(bool freshly_activated) {
 	Q_UNUSED(freshly_activated)
 	loadFromDatabase();
-  loadCacheFromFile(accountId());
 
 	if (qApp->isFirstRun(QSL("3.1.1")) || (childCount() == 1 && child(0)->kind() == RootItemKind::Bin)) {
 		syncIn();
@@ -59,8 +58,6 @@ void TtRssServiceRoot::start(bool freshly_activated) {
 }
 
 void TtRssServiceRoot::stop() {
-  saveCacheToFile(accountId());
-
 	m_network->logout();
 	qDebug("Stopping Tiny Tiny RSS account, logging out with result '%d'.", (int) m_network->lastError());
 }
@@ -89,7 +86,9 @@ bool TtRssServiceRoot::deleteViaGui() {
 }
 
 bool TtRssServiceRoot::markAsReadUnread(RootItem::ReadStatus status) {
-	addMessageStatesToCache(customIDSOfMessagesForItem(this), status);
+  network()->updateArticles(customIDSOfMessagesForItem(this),
+                            UpdateArticle::Unread,
+                            status == RootItem::Read ? UpdateArticle::SetToFalse : UpdateArticle::SetToTrue);
 	return ServiceRoot::markAsReadUnread(status);
 }
 
@@ -156,40 +155,6 @@ RecycleBin* TtRssServiceRoot::recycleBin() const {
 	return m_recycleBin;
 }
 
-void TtRssServiceRoot::saveAllCachedData() {
-	QPair<QMap<RootItem::ReadStatus, QStringList>, QMap<RootItem::Importance, QList<Message>>> msgCache = takeMessageCache();
-	QMapIterator<RootItem::ReadStatus, QStringList> i(msgCache.first);
-
-	// Save the actual data read/unread.
-	while (i.hasNext()) {
-		i.next();
-		auto key = i.key();
-		QStringList ids = i.value();
-
-		if (!ids.isEmpty()) {
-			network()->updateArticles(ids,
-			                          UpdateArticle::Unread,
-			                          key == RootItem::Unread ? UpdateArticle::SetToTrue : UpdateArticle::SetToFalse);
-		}
-	}
-
-	QMapIterator<RootItem::Importance, QList<Message>> j(msgCache.second);
-
-	// Save the actual data important/not important.
-	while (j.hasNext()) {
-		j.next();
-		auto key = j.key();
-		QList<Message> messages = j.value();
-
-		if (!messages.isEmpty()) {
-			QStringList ids = customIDsOfMessages(messages);
-			network()->updateArticles(ids,
-			                          UpdateArticle::Starred,
-			                          key == RootItem::Important ? UpdateArticle::SetToTrue : UpdateArticle::SetToFalse);
-		}
-	}
-}
-
 QList<QAction*> TtRssServiceRoot::serviceMenu() {
 	if (m_serviceMenu.isEmpty()) {
 		m_actionSyncIn = new QAction(qApp->icons()->fromTheme(QSL("view-refresh")), tr("Sync in"), this);
@@ -202,34 +167,29 @@ QList<QAction*> TtRssServiceRoot::serviceMenu() {
 
 bool TtRssServiceRoot::onBeforeSetMessagesRead(RootItem* selected_item, const QList<Message>& messages, RootItem::ReadStatus read) {
 	Q_UNUSED(selected_item)
-	addMessageStatesToCache(customIDsOfMessages(messages), read);
+  network()->updateArticles(
+      customIDsOfMessages(messages),
+      UpdateArticle::Unread, read == RootItem::Read ? UpdateArticle::SetToFalse : UpdateArticle::SetToTrue);
 	return true;
 }
 
 bool TtRssServiceRoot::onBeforeSwitchMessageImportance(RootItem* selected_item, const QList<ImportanceChange>& changes) {
-	Q_UNUSED(selected_item)
-	// Now, we need to separate the changes because of ownCloud API limitations.
-	QList<Message> mark_starred_msgs;
-	QList<Message> mark_unstarred_msgs;
+  Q_UNUSED(selected_item)
 
-	foreach (const ImportanceChange& pair, changes) {
-		if (pair.second == RootItem::Important) {
-			mark_starred_msgs.append(pair.first);
-		}
-		else {
-			mark_unstarred_msgs.append(pair.first);
-		}
-	}
+  // NOTE: We just toggle it here, because we know, that there is only
+  // toggling of starred status supported by RSS Guard right now and
+  // Tiny Tiny RSS API allows it, which is great.
+  TtRssUpdateArticleResponse response = m_network->updateArticles(
+                                            customIDsOfMessages(changes),
+                                            UpdateArticle::Starred,
+                                            UpdateArticle::Togggle);
 
-	if (!mark_starred_msgs.isEmpty()) {
-		addMessageStatesToCache(mark_starred_msgs, RootItem::Important);
-	}
-
-	if (!mark_unstarred_msgs.isEmpty()) {
-		addMessageStatesToCache(mark_unstarred_msgs, RootItem::NotImportant);
-	}
-
-	return true;
+  if (m_network->lastError() == QNetworkReply::NoError && response.updateStatus() == STATUS_OK) {
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 TtRssNetworkFactory* TtRssServiceRoot::network() const {

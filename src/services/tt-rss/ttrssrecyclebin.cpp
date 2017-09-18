@@ -33,6 +33,8 @@ TtRssServiceRoot* TtRssRecycleBin::serviceRoot() {
 }
 
 bool TtRssRecycleBin::markAsReadUnread(RootItem::ReadStatus status) {
-	serviceRoot()->addMessageStatesToCache(getParentServiceRoot()->customIDSOfMessagesForItem(this), status);
+  serviceRoot()->network()->updateArticles(
+      serviceRoot()->customIDSOfMessagesForItem(this),
+      UpdateArticle::Unread, status == RootItem::Read ? UpdateArticle::SetToFalse : UpdateArticle::SetToTrue);
 	return RecycleBin::markAsReadUnread(status);
 }

@@ -88,7 +88,7 @@ bool OwnCloudFeed::removeItself() {
 }
 
 bool OwnCloudFeed::markAsReadUnread(RootItem::ReadStatus status) {
-	serviceRoot()->addMessageStatesToCache(getParentServiceRoot()->customIDSOfMessagesForItem(this), status);
+  serviceRoot()->network()->markMessagesRead(status, serviceRoot()->customIDSOfMessagesForItem(this));
 	return getParentServiceRoot()->markFeedsReadUnread(QList<Feed*>() << this, status);
 }
 

@@ -124,7 +124,8 @@ bool TtRssFeed::deleteViaGui() {
 }
 
 bool TtRssFeed::markAsReadUnread(RootItem::ReadStatus status) {
-	serviceRoot()->addMessageStatesToCache(getParentServiceRoot()->customIDSOfMessagesForItem(this), status);
+  serviceRoot()->network()->updateArticles(serviceRoot()->customIDSOfMessagesForItem(this),
+                                           UpdateArticle::Unread, status == RootItem::Read ? UpdateArticle::SetToFalse : UpdateArticle::SetToTrue);
 	return getParentServiceRoot()->markFeedsReadUnread(QList<Feed*>() << this, status);
 }
 
