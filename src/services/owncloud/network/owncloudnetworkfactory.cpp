@@ -299,7 +299,7 @@ QNetworkReply::NetworkError OwnCloudNetworkFactory::triggerFeedUpdate(int feed_i
 	return (m_lastError = network_reply.first);
 }
 
-QNetworkReply::NetworkError OwnCloudNetworkFactory::markMessagesRead(RootItem::ReadStatus status, const QStringList& custom_ids) {
+void OwnCloudNetworkFactory::markMessagesRead(RootItem::ReadStatus status, const QStringList& custom_ids) {
 	QJsonObject json;
 	QJsonArray ids;
 	QByteArray raw_output;
@@ -318,26 +318,24 @@ QNetworkReply::NetworkError OwnCloudNetworkFactory::markMessagesRead(RootItem::R
 
 	json["items"] = ids;
 	qDebug() << QSL("Raw output for marking msgs read with Nextcloud is : \n\n") << QString::fromUtf8(raw_output);
-	NetworkResult network_reply = NetworkFactory::performNetworkOperation(final_url,
-	                              qApp->settings()->value(GROUP(Feeds),
-	                                                      SETTING(Feeds::UpdateTimeout)).toInt(),
-	                              QJsonDocument(json).toJson(QJsonDocument::Compact),
-	                              QSL("application/json"),
-	                              raw_output,
-	                              QNetworkAccessManager::PutOperation,
-	                              true, m_authUsername, m_authPassword,
-	                              true);
 
-	if (network_reply.first != QNetworkReply::NoError) {
-		qWarning("ownCloud: Marking messages as (un)read failed with error %d.", network_reply.first);
-	}
+  Downloader* downloader = NetworkFactory::performAsyncNetworkOperation(
+                               final_url,
+                               qApp->settings()->value(GROUP(Feeds),
+                                                       SETTING(Feeds::UpdateTimeout)).toInt(),
+                               QJsonDocument(json).toJson(QJsonDocument::Compact),
+                               QSL("application/json"),
+                               raw_output,
+                               QNetworkAccessManager::PutOperation,
+                               true, m_authUsername, m_authPassword,
+                               true);
 
-	return (m_lastError = network_reply.first);
+  QObject::connect(downloader, &Downloader::completed, downloader, &Downloader::deleteLater);
 }
 
-QNetworkReply::NetworkError OwnCloudNetworkFactory::markMessagesStarred(RootItem::Importance importance,
-        const QStringList& feed_ids,
-        const QStringList& guid_hashes) {
+void OwnCloudNetworkFactory::markMessagesStarred(RootItem::Importance importance,
+                                                 const QStringList& feed_ids,
+                                                 const QStringList& guid_hashes) {
 	QJsonObject json;
 	QJsonArray ids;
 	QByteArray raw_output;
@@ -358,21 +356,18 @@ QNetworkReply::NetworkError OwnCloudNetworkFactory::markMessagesStarred(RootItem
 	}
 
 	json["items"] = ids;
-	NetworkResult network_reply = NetworkFactory::performNetworkOperation(final_url,
-	                              qApp->settings()->value(GROUP(Feeds),
-	                                                      SETTING(Feeds::UpdateTimeout)).toInt(),
-	                              QJsonDocument(json).toJson(QJsonDocument::Compact),
-	                              "application/json",
-	                              raw_output,
-	                              QNetworkAccessManager::PutOperation,
-	                              true, m_authUsername, m_authPassword,
-	                              true);
+  Downloader* downloader = NetworkFactory::performAsyncNetworkOperation(
+                               final_url,
+                               qApp->settings()->value(GROUP(Feeds),
+                                                       SETTING(Feeds::UpdateTimeout)).toInt(),
+                               QJsonDocument(json).toJson(QJsonDocument::Compact),
+                               "application/json",
+                               raw_output,
+                               QNetworkAccessManager::PutOperation,
+                               true, m_authUsername, m_authPassword,
+                               true);
 
-	if (network_reply.first != QNetworkReply::NoError) {
-		qWarning("ownCloud: Marking messages as (un)starred failed with error %d.", network_reply.first);
-	}
-
-	return (m_lastError = network_reply.first);
+  QObject::connect(downloader, &Downloader::completed, downloader, &Downloader::deleteLater);
 }
 
 int OwnCloudNetworkFactory::batchSize() const {

@@ -142,20 +142,12 @@ bool OwnCloudServiceRoot::onBeforeSwitchMessageImportance(RootItem* selected_ite
     }
   }
 
-  // OK, now perform the online update itself.
-
   if (!mark_starred_feed_ids.isEmpty()) {
-    if (network()->markMessagesStarred(RootItem::Important, mark_starred_feed_ids, mark_starred_guid_hashes) !=
-            QNetworkReply::NoError) {
-      return false;
-    }
+    network()->markMessagesStarred(RootItem::Important, mark_starred_feed_ids, mark_starred_guid_hashes);
   }
 
   if (!mark_unstarred_feed_ids.isEmpty()) {
-    if (network()->markMessagesStarred(RootItem::NotImportant, mark_unstarred_feed_ids, mark_unstarred_guid_hashes) !=
-            QNetworkReply::NoError) {
-      return false;
-    }
+    network()->markMessagesStarred(RootItem::NotImportant, mark_unstarred_feed_ids, mark_unstarred_guid_hashes);
   }
 
 	return true;

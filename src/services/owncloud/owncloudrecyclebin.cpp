@@ -34,5 +34,6 @@ OwnCloudServiceRoot* OwnCloudRecycleBin::serviceRoot() {
 }
 
 bool OwnCloudRecycleBin::markAsReadUnread(RootItem::ReadStatus status) {
+  serviceRoot()->network()->markMessagesRead(status, serviceRoot()->customIDSOfMessagesForItem(this));
 	return RecycleBin::markAsReadUnread(status);
 }

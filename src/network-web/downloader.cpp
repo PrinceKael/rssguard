@@ -90,7 +90,9 @@ void Downloader::manipulateData(const QString& url, QNetworkAccessManager::Opera
 void Downloader::finished() {
 	QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
 	QNetworkAccessManager::Operation reply_operation = reply->operation();
+
 	m_timer->stop();
+
 	// In this phase, some part of downloading process is completed.
 	const QUrl redirection_url = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
 
@@ -130,6 +132,7 @@ void Downloader::finished() {
 		m_lastOutputError = reply->error();
 		m_activeReply->deleteLater();
 		m_activeReply = nullptr;
+
 		emit completed(m_lastOutputError, m_lastOutputData);
 	}
 }
@@ -178,6 +181,7 @@ void Downloader::runGetRequest(const QNetworkRequest& request) {
 	m_activeReply->setProperty("protected", m_targetProtected);
 	m_activeReply->setProperty("username", m_targetUsername);
 	m_activeReply->setProperty("password", m_targetPassword);
+
 	connect(m_activeReply, &QNetworkReply::downloadProgress, this, &Downloader::progressInternal);
 	connect(m_activeReply, &QNetworkReply::finished, this, &Downloader::finished);
 }
