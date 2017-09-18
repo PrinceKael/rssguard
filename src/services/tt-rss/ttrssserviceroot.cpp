@@ -179,17 +179,8 @@ bool TtRssServiceRoot::onBeforeSwitchMessageImportance(RootItem* selected_item, 
   // NOTE: We just toggle it here, because we know, that there is only
   // toggling of starred status supported by RSS Guard right now and
   // Tiny Tiny RSS API allows it, which is great.
-  TtRssUpdateArticleResponse response = m_network->updateArticles(
-                                            customIDsOfMessages(changes),
-                                            UpdateArticle::Starred,
-                                            UpdateArticle::Togggle);
-
-  if (m_network->lastError() == QNetworkReply::NoError && response.updateStatus() == STATUS_OK) {
-    return true;
-  }
-  else {
-    return false;
-  }
+  m_network->updateArticles(customIDsOfMessages(changes), UpdateArticle::Starred, UpdateArticle::Togggle);
+  return true;
 }
 
 TtRssNetworkFactory* TtRssServiceRoot::network() const {

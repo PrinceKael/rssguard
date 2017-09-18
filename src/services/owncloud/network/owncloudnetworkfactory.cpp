@@ -283,14 +283,15 @@ QNetworkReply::NetworkError OwnCloudNetworkFactory::triggerFeedUpdate(int feed_i
 
 	// Now, we can trigger the update.
 	QByteArray raw_output;
-	NetworkResult network_reply = NetworkFactory::performNetworkOperation(m_urlFeedsUpdate.arg(userId(),
-	                              QString::number(feed_id)),
-	                              qApp->settings()->value(GROUP(Feeds),
-	                                                      SETTING(Feeds::UpdateTimeout)).toInt(),
-	                              QByteArray(), QString(), raw_output,
-	                              QNetworkAccessManager::GetOperation,
-	                              true, m_authUsername, m_authPassword,
-	                              true);
+  NetworkResult network_reply = NetworkFactory::performNetworkOperation(
+                                    m_urlFeedsUpdate.arg(userId(),
+                                                         QString::number(feed_id)),
+                                    qApp->settings()->value(GROUP(Feeds),
+                                                            SETTING(Feeds::UpdateTimeout)).toInt(),
+                                    QByteArray(), QString(), raw_output,
+                                    QNetworkAccessManager::GetOperation,
+                                    true, m_authUsername, m_authPassword,
+                                    true);
 
 	if (network_reply.first != QNetworkReply::NoError) {
 		qWarning("ownCloud: Feeds update failed with error %d.", network_reply.first);
@@ -302,7 +303,6 @@ QNetworkReply::NetworkError OwnCloudNetworkFactory::triggerFeedUpdate(int feed_i
 void OwnCloudNetworkFactory::markMessagesRead(RootItem::ReadStatus status, const QStringList& custom_ids) {
 	QJsonObject json;
 	QJsonArray ids;
-	QByteArray raw_output;
 	QString final_url;
 
 	if (status == RootItem::Read) {
@@ -317,15 +317,13 @@ void OwnCloudNetworkFactory::markMessagesRead(RootItem::ReadStatus status, const
 	}
 
 	json["items"] = ids;
-	qDebug() << QSL("Raw output for marking msgs read with Nextcloud is : \n\n") << QString::fromUtf8(raw_output);
 
   Downloader* downloader = NetworkFactory::performAsyncNetworkOperation(
                                final_url,
                                qApp->settings()->value(GROUP(Feeds),
                                                        SETTING(Feeds::UpdateTimeout)).toInt(),
                                QJsonDocument(json).toJson(QJsonDocument::Compact),
-                               QSL("application/json"),
-                               raw_output,
+                               CONTENT_TYPE,
                                QNetworkAccessManager::PutOperation,
                                true, m_authUsername, m_authPassword,
                                true);
@@ -338,7 +336,6 @@ void OwnCloudNetworkFactory::markMessagesStarred(RootItem::Importance importance
                                                  const QStringList& guid_hashes) {
 	QJsonObject json;
 	QJsonArray ids;
-	QByteArray raw_output;
 	QString final_url;
 
 	if (importance == RootItem::Important) {
@@ -361,8 +358,7 @@ void OwnCloudNetworkFactory::markMessagesStarred(RootItem::Importance importance
                                qApp->settings()->value(GROUP(Feeds),
                                                        SETTING(Feeds::UpdateTimeout)).toInt(),
                                QJsonDocument(json).toJson(QJsonDocument::Compact),
-                               "application/json",
-                               raw_output,
+                               CONTENT_TYPE,
                                QNetworkAccessManager::PutOperation,
                                true, m_authUsername, m_authPassword,
                                true);

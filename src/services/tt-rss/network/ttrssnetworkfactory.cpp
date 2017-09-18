@@ -221,9 +221,9 @@ TtRssGetHeadlinesResponse TtRssNetworkFactory::getHeadlines(int feed_id, int lim
 	return result;
 }
 
-TtRssUpdateArticleResponse TtRssNetworkFactory::updateArticles(const QStringList& ids,
-        UpdateArticle::OperatingField field,
-        UpdateArticle::Mode mode) {
+void TtRssNetworkFactory::updateArticles(const QStringList& ids,
+                                         UpdateArticle::OperatingField field,
+                                         UpdateArticle::Mode mode) {
 	QJsonObject json;
 	json["op"] = QSL("updateArticle");
 	json["sid"] = m_sessionId;
@@ -231,31 +231,34 @@ TtRssUpdateArticleResponse TtRssNetworkFactory::updateArticles(const QStringList
 	json["mode"] = (int) mode;
 	json["field"] = (int) field;
 	const int timeout = qApp->settings()->value(GROUP(Feeds), SETTING(Feeds::UpdateTimeout)).toInt();
-	QByteArray result_raw;
-	NetworkResult network_reply = NetworkFactory::performNetworkOperation(m_fullUrl, timeout,
-	                              QJsonDocument(json).toJson(QJsonDocument::Compact),
-	                              CONTENT_TYPE, result_raw,
-	                              QNetworkAccessManager::PostOperation,
-	                              m_authIsUsed, m_authUsername, m_authPassword);
-	TtRssUpdateArticleResponse result(QString::fromUtf8(result_raw));
+  Downloader* downloader = NetworkFactory::performAsyncNetworkOperation(
+                               m_fullUrl, timeout,
+                               QJsonDocument(json).toJson(QJsonDocument::Compact),
+                               CONTENT_TYPE,
+                               QNetworkAccessManager::PostOperation,
+                               m_authIsUsed, m_authUsername, m_authPassword);
 
-	if (result.isNotLoggedIn()) {
-		// We are not logged in.
-		login();
-		json["sid"] = m_sessionId;
-		network_reply = NetworkFactory::performNetworkOperation(m_fullUrl, timeout, QJsonDocument(json).toJson(QJsonDocument::Compact),
-		                                                        CONTENT_TYPE, result_raw,
-		                                                        QNetworkAccessManager::PostOperation,
-		                                                        m_authIsUsed, m_authUsername, m_authPassword);
-		result = TtRssUpdateArticleResponse(QString::fromUtf8(result_raw));
-	}
+  QObject::connect(downloader, &Downloader::completed, [ = ](QNetworkReply::NetworkError status, QByteArray data) {
+    downloader->deleteLater();
 
-	if (network_reply.first != QNetworkReply::NoError) {
-		qWarning("TT-RSS: updateArticle failed with error %d.", network_reply.first);
-	}
+    TtRssUpdateArticleResponse result(QString::fromUtf8(data));
 
-	m_lastError = network_reply.first;
-	return result;
+    if (status != QNetworkReply::NoError) {
+      qWarning("TT-RSS: updateArticle failed with error %d.", status);
+    }
+
+    if (result.isNotLoggedIn()) {
+      // We are not logged in.
+      login();
+      json["sid"] = m_sessionId;
+      Downloader* next_downloader = NetworkFactory::performAsyncNetworkOperation(
+                                        m_fullUrl, timeout, QJsonDocument(json).toJson(QJsonDocument::Compact),
+                                        CONTENT_TYPE,
+                                        QNetworkAccessManager::PostOperation,
+                                        m_authIsUsed, m_authUsername, m_authPassword);
+      QObject::connect(next_downloader, &Downloader::completed, next_downloader, &Downloader::deleteLater);
+    }
+  });
 }
 
 TtRssSubscribeToFeedResponse TtRssNetworkFactory::subscribeToFeed(const QString& url, int category_id,

@@ -160,8 +160,7 @@ class TtRssNetworkFactory {
 		                                       bool show_content, bool include_attachments,
 		                                       bool sanitize);
 
-		TtRssUpdateArticleResponse updateArticles(const QStringList& ids, UpdateArticle::OperatingField field,
-		                                          UpdateArticle::Mode mode);
+    void updateArticles(const QStringList& ids, UpdateArticle::OperatingField field, UpdateArticle::Mode mode);
 
 		TtRssSubscribeToFeedResponse subscribeToFeed(const QString& url, int category_id, bool protectd = false,
 		                                             const QString& username = QString(), const QString& password = QString());

@@ -149,7 +149,7 @@ QNetworkReply::NetworkError NetworkFactory::downloadIcon(const QList<QString>& u
 }
 
 Downloader* NetworkFactory::performAsyncNetworkOperation(const QString& url, int timeout, const QByteArray& input_data,
-                                                         const QString& input_content_type, QByteArray& output,
+                                                         const QString& input_content_type,
                                                          QNetworkAccessManager::Operation operation,
                                                          bool protected_contents, const QString& username,
                                                          const QString& password, bool set_basic_header) {
