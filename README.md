@@ -1,6 +1,3 @@
-# RSS Guard is looking for new leading developer/maintainer. I've changed my workflow and I do not use any RSS reader anymore! Anyone interested may obtain push rights and continue in project development. Contact me in such case.
-
-
 RSS Guard
 =========
 
@@ -16,7 +13,5 @@ RSS Guard
 Welcome to RSS Guard website. You can find here basic information.
 
 RSS Guard is simple, light and easy-to-use RSS/ATOM feed aggregator developed using Qt framework which supports online feed synchronization.
-
-#### You can support this project via [donations](https://martinrotter.github.io/donate/).
 
 #### See [Wiki](https://github.com/martinrotter/rssguard/wiki) for more information about features, download links and other stuff.
